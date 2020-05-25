@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net"
@@ -54,6 +53,10 @@ func (w *Ws) Version() string {
 
 // read a websocket message
 func (w *Ws) Read() (int, []byte, error) {
+	if w.conn == nil {
+		_ = w.Connect()
+		return 0, []byte{}, errors.New("can not read when there is no connection, trying to reconnect")
+	}
 	t, d, err := w.conn.ReadMessage()
 	w.errCheck(err)
 	log.Println(w.conn.UnderlyingConn().RemoteAddr().String())
@@ -62,6 +65,10 @@ func (w *Ws) Read() (int, []byte, error) {
 
 // read a websocket message in json format
 func (w *Ws) ReadJSON(v interface{}) error {
+	if w.conn == nil {
+		_ = w.Connect()
+		return errors.New("can not read when there is no connection, trying to reconnect")
+	}
 	err := w.conn.ReadJSON(v)
 	w.errCheck(err)
 	return err
@@ -159,10 +166,12 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
 	go func() {
 		for bytes := range c {
 			err := w.WriteMessage(1, bytes)
-			fmt.Println(err, bytes)
 			w.errCheck(err)
 			if err != nil {
-				e <- err
+				select {
+				case e <- err:
+				default:
+				}
 				select {
 				case c <- bytes:
 				default:
