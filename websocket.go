@@ -15,25 +15,25 @@ import (
 type Ws struct {
     // websocket connection
     conn *websocket.Conn
-    
+
     // certificate pool used for secure connections
     caPool *x509.CertPool
-    
+
     // set to true to use certificates
     secure bool
-    
+
     // url contains the url to connect to
     url url.URL
-    
+
     // set to true to send the initMsg when a connection is mademv6l.tar.g
     sendInitMsg bool
-    
+
     // message that is to be send  when a connection is made
     initMsg []byte
-    
+
     // set to true to automatically try to to reconnect
     reconnect bool
-    
+
     // close handler is called when a connection ends
     closeHandler func(int, string) error
 }
@@ -119,7 +119,16 @@ func (w *Ws) Connect() error {
     }
     w.conn = c
     w.conn.SetCloseHandler(w.closeHandler)
+    if w.sendInitMsg {
+        w.WriteMessage(1, w.initMsg)
+    }
     return nil
+}
+
+// set a message to be send when a connection is established
+func (w *Ws) SetInitMsg(msg []byte) {
+    w.sendInitMsg = true
+    w.initMsg = msg
 }
 
 // set a close handler to call when a connection ends
@@ -164,6 +173,7 @@ func (w *Ws) SetSecure(b bool) {
 // if wil requeue failed messages until the queue is filled, then it will throw them away
 func (w *Ws) WriteQueue(c chan []byte, e chan error) {
     go func() {
+
         for bytes := range c {
             err := w.WriteMessage(1, bytes)
             w.errCheck(err)
