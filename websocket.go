@@ -178,14 +178,8 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
             err := w.WriteMessage(1, bytes)
             w.errCheck(err)
             if err != nil {
-                select {
-                case e <- err:
-                default:
-                }
-                select {
-                case c <- bytes:
-                default:
-                }
+                e <- err:
+                c <- bytes:
             }
         }
     }()
