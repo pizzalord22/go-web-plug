@@ -178,8 +178,8 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
             err := w.WriteMessage(1, bytes)
             w.errCheck(err)
             if err != nil {
-                e <- err:
-                c <- bytes:
+                e <- err
+                c <- bytes
             }
         }
     }()
