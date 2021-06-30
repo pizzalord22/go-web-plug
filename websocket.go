@@ -11,6 +11,7 @@ import (
 )
 
 // todo make writing thread safe
+var lastError error
 
 type Ws struct {
     // websocket connection
@@ -150,6 +151,9 @@ func (w *Ws) Close() error {
 func (w *Ws) errCheck(err error) {
     var reset bool
     if w.reconnect {
+        if err == lastError{
+            return
+        }
         if err != nil && websocket.IsCloseError(err) {
             reset = true
         }
@@ -173,7 +177,6 @@ func (w *Ws) SetSecure(b bool) {
 // if wil requeue failed messages until the queue is filled, then it will throw them away
 func (w *Ws) WriteQueue(c chan []byte, e chan error) {
     go func() {
-
         for bytes := range c {
             err := w.WriteMessage(1, bytes)
             w.errCheck(err)
