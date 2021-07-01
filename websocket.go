@@ -151,7 +151,7 @@ func (w *Ws) Close() error {
 func (w *Ws) errCheck(err error) {
     var reset bool
     if w.reconnect {
-        if err == lastError{
+        if err.Error() == lastError.Error(){
             return
         }
         lastError = err
