@@ -154,6 +154,7 @@ func (w *Ws) errCheck(err error) {
         if err == lastError{
             return
         }
+        lastError = err
         if err != nil && websocket.IsCloseError(err) {
             reset = true
         }
