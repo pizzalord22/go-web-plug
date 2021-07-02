@@ -121,7 +121,7 @@ func (w *Ws) Connect() error {
     w.conn = c
     w.conn.SetCloseHandler(w.closeHandler)
     if w.sendInitMsg {
-        w.WriteMessage(1, w.initMsg)
+        return w.WriteMessage(1, w.initMsg)
     }
     return nil
 }
