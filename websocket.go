@@ -159,7 +159,7 @@ func (w *Ws) errCheck(err error) {
             return
         }
         lastError = err
-        if err != nil && websocket.IsCloseError(err) && websocket.IsUnexpectedCloseError(err) {
+        if err != nil && websocket.IsCloseError(err) /*&& websocket.IsUnexpectedCloseError(err)*/ {
             reset = true
         }
         _, ok := err.(*net.OpError)
