@@ -12,7 +12,7 @@ import (
 )
 
 // todo make writing thread safe
-var lastError error
+var lastError error = errors.New("initial error")
 
 type Ws struct {
     // websocket connection
