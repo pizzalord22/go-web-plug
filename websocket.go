@@ -11,7 +11,6 @@ import (
     "github.com/gorilla/websocket"
 )
 
-// todo make writing thread safe
 var lastError error = errors.New("initial error")
 
 type Ws struct {
@@ -156,6 +155,9 @@ func (w *Ws) errCheck(err error) {
     var reset bool
     if lastError == nil {
         lastError = errors.New("initial error")
+    }
+    if err == nil {
+        return
     }
     if w.reconnect {
         if err.Error() == lastError.Error() {
