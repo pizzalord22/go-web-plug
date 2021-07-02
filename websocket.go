@@ -121,6 +121,9 @@ func (w *Ws) Connect() error {
     if err != nil {
         return err
     }
+    if w.conn != nil {
+        w.conn.Close()
+    }
     w.conn = c
     w.conn.SetCloseHandler(w.closeHandler)
     if w.sendInitMsg {
