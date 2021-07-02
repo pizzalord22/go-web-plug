@@ -4,10 +4,11 @@ import (
     "crypto/tls"
     "crypto/x509"
     "errors"
-    "github.com/gorilla/websocket"
     "log"
     "net"
     "net/url"
+
+    "github.com/gorilla/websocket"
 )
 
 // todo make writing thread safe
@@ -144,6 +145,9 @@ func (w *Ws) Reconnect(b bool) {
 
 // close the websocket connection
 func (w *Ws) Close() error {
+    if w.conn == nil {
+        return nil
+    }
     return w.conn.Close()
 }
 
@@ -151,11 +155,11 @@ func (w *Ws) Close() error {
 func (w *Ws) errCheck(err error) {
     var reset bool
     if w.reconnect {
-        if err.Error() == lastError.Error(){
+        if err.Error() == lastError.Error() {
             return
         }
         lastError = err
-        if err != nil && websocket.IsCloseError(err) {
+        if err != nil && websocket.IsCloseError(err) && websocket.IsUnexpectedCloseError(err) {
             reset = true
         }
         _, ok := err.(*net.OpError)
