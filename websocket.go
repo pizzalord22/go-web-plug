@@ -154,6 +154,9 @@ func (w *Ws) Close() error {
 // check for network problems
 func (w *Ws) errCheck(err error) {
     var reset bool
+    if lastError == nil {
+        lastError = errors.New("initial error")
+    }
     if w.reconnect {
         if err.Error() == lastError.Error() {
             return
