@@ -7,11 +7,13 @@ import (
     "log"
     "net"
     "net/url"
+    `time`
 
     "github.com/gorilla/websocket"
 )
 
 var lastError error = errors.New("initial error")
+var lastReconnect int64
 
 type Ws struct {
     // websocket connection
@@ -115,6 +117,7 @@ func (w *Ws) Connect() error {
         d = websocket.Dialer{TLSClientConfig: &config}
     }
     c, _, err := d.Dial(w.url.String(), nil)
+    lastReconnect = time.Now().Unix()
     if err != nil {
         return err
     }
@@ -172,6 +175,9 @@ func (w *Ws) errCheck(err error) {
             reset = true
         }
         if reset {
+            if time.Now().Unix() - lastReconnect < 1{
+                time.Sleep(1)
+            }
             _ = w.Close()
             _ = w.Connect()
         }
