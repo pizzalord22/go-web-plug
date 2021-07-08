@@ -5,8 +5,8 @@ import (
     "crypto/x509"
     "errors"
     "log"
-    "net"
     "net/url"
+    `sync`
     `time`
 
     "github.com/gorilla/websocket"
@@ -14,6 +14,7 @@ import (
 
 var lastError error = errors.New("initial error")
 var lastReconnect int64
+var syncLock = new(sync.Mutex)
 
 type Ws struct {
     // websocket connection
@@ -79,6 +80,8 @@ func (w *Ws) ReadJSON(v interface{}) error {
 
 // write a message
 func (w *Ws) WriteMessage(messageType int, data []byte) error {
+    syncLock.Lock()
+    defer syncLock.Unlock()
     if w.conn == nil {
         _ = w.Connect()
         return errors.New("can not write when there is no connection, trying to reconnect")
@@ -94,7 +97,9 @@ func (w *Ws) WriteJSON(v interface{}) error {
         _ = w.Connect()
         return errors.New("can not write when there is no connection, trying to reconnect")
     }
+    syncLock.Lock()
     err := w.conn.WriteJSON(v)
+    syncLock.Unlock()
     w.errCheck(err)
     return err
 }
@@ -111,6 +116,8 @@ func (w *Ws) SetUrl(scheme, host, path string) {
 
 // connect to the websocket server
 func (w *Ws) Connect() error {
+    syncLock.Lock()
+    defer syncLock.Unlock()
     var d websocket.Dialer
     if w.secure {
         config := tls.Config{RootCAs: w.caPool}
@@ -153,6 +160,7 @@ func (w *Ws) Close() error {
     if w.conn == nil {
         return nil
     }
+    w.WriteMessage(websocket.CloseMessage,[]byte{})
     return w.conn.Close()
 }
 
@@ -170,11 +178,7 @@ func (w *Ws) errCheck(err error) {
             return
         }
         lastError = err
-        if err != nil && websocket.IsCloseError(err) /*&& websocket.IsUnexpectedCloseError(err)*/ {
-            reset = true
-        }
-        _, ok := err.(*net.OpError)
-        if ok {
+        if err != nil && websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway, websocket.CloseAbnormalClosure){
             reset = true
         }
         if reset {
