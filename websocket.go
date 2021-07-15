@@ -12,7 +12,6 @@ import (
     "github.com/gorilla/websocket"
 )
 
-var lastReconnect int64
 var syncLock = new(sync.Mutex)
 
 type Ws struct {
@@ -133,7 +132,7 @@ func (w *Ws) Connect() error {
         return err
     }
     if w.conn != nil {
-        w.conn.Close()
+        w.Close()
     }
     w.conn = c
     w.conn.SetCloseHandler(w.closeHandler)
