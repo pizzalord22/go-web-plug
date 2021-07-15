@@ -88,11 +88,7 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
         _ = w.Connect()
         return errors.New("can not write when there is no connection, trying to reconnect")
     }
-    log.Println("attempting to write")
     err := w.conn.WriteMessage(messageType, data)
-    if err != nil {
-        log.Println("write message error", err.Error())
-    }
     w.errCheck(err)
     return err
 }
@@ -173,7 +169,7 @@ func (w *Ws) Close() error {
 // check for network problems
 func (w *Ws) errCheck(err error) {
     if err != nil {
-        log.Println(err)
+        log.Println("error",err)
         log.Println("do we want to reconnect", w.reconnect)
         if w.reconnect {
             log.Println("reconnecting")
