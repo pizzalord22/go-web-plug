@@ -172,7 +172,7 @@ func (w *Ws) Close() error {
 // check for network problems
 func (w *Ws) errCheck(err error) {
     if err != nil {
-        log.Println("error",err)
+        log.Println("error", err)
         log.Println("do we want to reconnect", w.reconnect)
         if w.reconnect {
             log.Println("reconnecting")
@@ -181,6 +181,7 @@ func (w *Ws) errCheck(err error) {
             }
             for err != nil {
                 err = w.Connect()
+                time.Sleep(1 * time.Second)
             }
         }
     }
@@ -208,3 +209,5 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
 
 // exported as symbol named "Websocket"
 var Websocket Ws
+
+// cor 2 email accounts eigen en service
