@@ -89,6 +89,9 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
         return errors.New("can not write when there is no connection, trying to reconnect")
     }
     err := w.conn.WriteMessage(messageType, data)
+    if err != nil {
+        log.Println("writer error", err.Error())
+    }
     w.errCheck(err)
     return err
 }
