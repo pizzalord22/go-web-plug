@@ -118,6 +118,7 @@ func (w *Ws) SetUrl(scheme, host, path string) {
 
 // connect to the websocket server
 func (w *Ws) Connect() error {
+    log.Println("locking to connect")
     syncLock.Lock()
     defer syncLock.Unlock()
     var d websocket.Dialer
@@ -131,6 +132,7 @@ func (w *Ws) Connect() error {
         return err
     }
     if w.conn != nil {
+        log.Println("closing connection")
         w.conn.Close()
     }
     w.conn = c
@@ -177,8 +179,9 @@ func (w *Ws) errCheck(err error) {
             if time.Now().Unix()-lastReconnect < 1 {
                 time.Sleep(1)
             }
-            _ = w.Close()
-            _ = w.Connect()
+            for err != nil {
+                err = w.Connect()
+            }
         }
     }
 }
