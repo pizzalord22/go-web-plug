@@ -175,6 +175,7 @@ func (w *Ws) errCheck(err error) {
     if err == nil {
         return
     }
+    log.Println("do we want to reconnect", w.reconnect)
     if w.reconnect {
         if err.Error() == lastError.Error() {
             return
