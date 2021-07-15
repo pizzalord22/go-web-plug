@@ -59,6 +59,8 @@ func (w *Ws) Read() (int, []byte, error) {
         _ = w.Connect()
         return 0, []byte{}, errors.New("can not read when there is no connection, trying to reconnect")
     }
+    syncLock.Lock()
+    defer syncLock.Unlock()
     t, d, err := w.conn.ReadMessage()
     w.errCheck(err)
     log.Println(w.conn.UnderlyingConn().RemoteAddr().String())
@@ -71,6 +73,8 @@ func (w *Ws) ReadJSON(v interface{}) error {
         _ = w.Connect()
         return errors.New("can not read when there is no connection, trying to reconnect")
     }
+    syncLock.Lock()
+    defer syncLock.Unlock()
     err := w.conn.ReadJSON(v)
     w.errCheck(err)
     return err
@@ -78,12 +82,12 @@ func (w *Ws) ReadJSON(v interface{}) error {
 
 // write a message
 func (w *Ws) WriteMessage(messageType int, data []byte) error {
-    syncLock.Lock()
-    defer syncLock.Unlock()
     if w.conn == nil {
         _ = w.Connect()
         return errors.New("can not write when there is no connection, trying to reconnect")
     }
+    syncLock.Lock()
+    defer syncLock.Unlock()
     err := w.conn.WriteMessage(messageType, data)
     w.errCheck(err)
     return err
@@ -91,12 +95,12 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
 
 // write a message in json format
 func (w *Ws) WriteJSON(v interface{}) error {
-    syncLock.Lock()
-    defer syncLock.Unlock()
     if w.conn == nil {
         _ = w.Connect()
         return errors.New("can not write when there is no connection, trying to reconnect")
     }
+    syncLock.Lock()
+    defer syncLock.Unlock()
     syncLock.Lock()
     err := w.conn.WriteJSON(v)
     syncLock.Unlock()
