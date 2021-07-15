@@ -12,7 +12,6 @@ import (
     "github.com/gorilla/websocket"
 )
 
-var lastError error = errors.New("initial error")
 var lastReconnect int64
 var syncLock = new(sync.Mutex)
 
@@ -42,7 +41,7 @@ type Ws struct {
     closeHandler func(int, string) error
 }
 
-// create a nwe certpool, this is needed since we can not add new certs to an empty cert pool
+// create a nwe caPool, this is needed since we can not add new certs to an empty cert pool
 func init() {
     Websocket.caPool = x509.NewCertPool()
 }
@@ -57,6 +56,8 @@ func (w *Ws) Version() string {
 
 // read a websocket message
 func (w *Ws) Read() (int, []byte, error) {
+    syncLock.Lock()
+    defer syncLock.Unlock()
     if w.conn == nil {
         _ = w.Connect()
         return 0, []byte{}, errors.New("can not read when there is no connection, trying to reconnect")
@@ -95,6 +96,8 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
 
 // write a message in json format
 func (w *Ws) WriteJSON(v interface{}) error {
+    syncLock.Lock()
+    defer syncLock.Unlock()
     if w.conn == nil {
         _ = w.Connect()
         return errors.New("can not write when there is no connection, trying to reconnect")
@@ -118,7 +121,6 @@ func (w *Ws) SetUrl(scheme, host, path string) {
 
 // connect to the websocket server
 func (w *Ws) Connect() error {
-    log.Println("locking to connect")
     syncLock.Lock()
     defer syncLock.Unlock()
     var d websocket.Dialer
@@ -127,12 +129,10 @@ func (w *Ws) Connect() error {
         d = websocket.Dialer{TLSClientConfig: &config}
     }
     c, _, err := d.Dial(w.url.String(), nil)
-    lastReconnect = time.Now().Unix()
     if err != nil {
         return err
     }
     if w.conn != nil {
-        log.Println("closing connection")
         w.conn.Close()
     }
     w.conn = c
@@ -140,7 +140,6 @@ func (w *Ws) Connect() error {
     if w.sendInitMsg {
         return w.WriteMessage(1, w.initMsg)
     }
-    log.Println("connected to server")
     return nil
 }
 
@@ -172,13 +171,8 @@ func (w *Ws) Close() error {
 // check for network problems
 func (w *Ws) errCheck(err error) {
     if err != nil {
-        log.Println("error", err)
-        log.Println("do we want to reconnect", w.reconnect)
+        log.Println(err)
         if w.reconnect {
-            log.Println("reconnecting")
-            if time.Now().Unix()-lastReconnect < 1 {
-                time.Sleep(1)
-            }
             for err != nil {
                 err = w.Connect()
                 time.Sleep(1 * time.Second)
@@ -209,5 +203,3 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
 
 // exported as symbol named "Websocket"
 var Websocket Ws
-
-// cor 2 email accounts eigen en service
