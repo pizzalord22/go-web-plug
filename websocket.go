@@ -90,7 +90,7 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
     }
     err := w.conn.WriteMessage(messageType, data)
     if err != nil {
-        log.Println("writer error", err.Error())
+        log.Println("write message error", err.Error())
     }
     w.errCheck(err)
     return err
