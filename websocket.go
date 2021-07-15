@@ -138,6 +138,7 @@ func (w *Ws) Connect() error {
     if w.sendInitMsg {
         return w.WriteMessage(1, w.initMsg)
     }
+    log.Println("connected to server")
     return nil
 }
 
@@ -193,7 +194,7 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
     go func() {
         for bytes := range c {
             err := w.WriteMessage(1, bytes)
-            w.errCheck(err)
+            go w.errCheck(err)
             if err != nil {
                 e <- err
                 c <- bytes
