@@ -184,6 +184,7 @@ func (w *Ws) errCheck(err error) {
             reset = true
         }
         if reset {
+            log.Println("reconnecting")
             if time.Now().Unix() - lastReconnect < 1{
                 time.Sleep(1)
             }
