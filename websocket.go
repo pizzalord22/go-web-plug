@@ -55,8 +55,6 @@ func (w *Ws) Version() string {
 
 // read a websocket message
 func (w *Ws) Read() (int, []byte, error) {
-    syncLock.Lock()
-    defer syncLock.Unlock()
     if w.conn == nil {
         _ = w.Connect()
         return 0, []byte{}, errors.New("can not read when there is no connection, trying to reconnect")
@@ -69,8 +67,6 @@ func (w *Ws) Read() (int, []byte, error) {
 
 // read a websocket message in json format
 func (w *Ws) ReadJSON(v interface{}) error {
-    syncLock.Lock()
-    defer syncLock.Unlock()
     if w.conn == nil {
         _ = w.Connect()
         return errors.New("can not read when there is no connection, trying to reconnect")
