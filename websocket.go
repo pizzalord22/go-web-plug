@@ -166,25 +166,18 @@ func (w *Ws) Close() error {
     if w.conn == nil {
         return nil
     }
-    w.WriteMessage(websocket.CloseMessage,[]byte{})
+    w.WriteMessage(websocket.CloseMessage, []byte{})
     return w.conn.Close()
 }
 
 // check for network problems
 func (w *Ws) errCheck(err error) {
-    var reset bool
-    if err == nil {
-        return
-    }
-    log.Println("do we want to reconnect", w.reconnect)
-    if w.reconnect {
-        if err != nil && websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway, websocket.CloseAbnormalClosure){
-            reset = true
-        }
-        log.Println("do we want to reset")
-        if reset {
+    if err != nil {
+        log.Println(err)
+        log.Println("do we want to reconnect", w.reconnect)
+        if w.reconnect {
             log.Println("reconnecting")
-            if time.Now().Unix() - lastReconnect < 1{
+            if time.Now().Unix()-lastReconnect < 1 {
                 time.Sleep(1)
             }
             _ = w.Close()
