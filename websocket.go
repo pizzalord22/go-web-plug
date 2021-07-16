@@ -46,7 +46,7 @@ func init() {
 }
 
 // semver 2.0
-const version = "1.0.0"
+const version = "1.1.0"
 
 // return the current version number
 func (w *Ws) Version() string {
@@ -63,7 +63,6 @@ func (w *Ws) Read() (int, []byte, error) {
     defer syncLock.Unlock()
     t, d, err := w.conn.ReadMessage()
     w.errCheck(err)
-    log.Println(w.conn.UnderlyingConn().RemoteAddr().String())
     return t, d, err
 }
 
