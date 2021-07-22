@@ -13,6 +13,8 @@ import (
 )
 
 var syncLock = new(sync.Mutex)
+var reconnectLock = new(sync.Mutex)
+var reconnectBool bool
 
 type Ws struct {
     // websocket connection
@@ -158,13 +160,18 @@ func (w *Ws) Close() error {
 
 // check for network problems
 func (w *Ws) errCheck(err error) {
-    if err != nil {
+    reconnectLock.Lock()
+    defer reconnectLock.Unlock()
+
+    if  err != nil {
         log.Println(err)
-        if w.reconnect {
+        if w.reconnect && !reconnectBool{
+            reconnectBool = true
             for err != nil {
                 err = w.Connect()
                 time.Sleep(1 * time.Second)
             }
+            reconnectBool = false
         }
     }
 }
@@ -184,7 +191,7 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
             if err != nil {
                 e <- err
                 c <- bytes
-                time.Sleep(200 * time.Millisecond)
+                time.Sleep(1 * time.Second)
             }
         }
     }()
