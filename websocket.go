@@ -184,6 +184,7 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
             if err != nil {
                 e <- err
                 c <- bytes
+                time.Sleep(200 * time.Millisecond)
             }
         }
     }()
