@@ -157,22 +157,28 @@ func (w *Ws) Close() error {
     w.WriteMessage(websocket.CloseMessage, []byte{})
     return w.conn.Close()
 }
-
 // check for network problems
 func (w *Ws) errCheck(err error) {
-    reconnectLock.Lock()
-    defer reconnectLock.Unlock()
-
-    if  err != nil {
-        log.Println(err)
-        if w.reconnect && !reconnectBool{
+    if err != nil {
+        reconnectLock.Lock()
+        if !reconnectBool {
+            reconnectLock.Unlock()
+            log.Println(err)
+        }
+        reconnectLock.Lock()
+        if w.reconnect && !reconnectBool {
             reconnectBool = true
+            reconnectLock.Unlock()
             for err != nil {
                 err = w.Connect()
                 time.Sleep(1 * time.Second)
             }
+            reconnectLock.Lock()
             reconnectBool = false
+            reconnectLock.Unlock()
+            return
         }
+        reconnectLock.Unlock()
     }
 }
 
@@ -183,6 +189,7 @@ func (w *Ws) SetSecure(b bool) {
 
 // writeQueue requires  a channel te read message from and a channel to send errors to
 // if wil requeue failed messages until the queue is filled, then it will throw them away
+// todo create a way to remove old message when the queue is filling up so that there is space for new message
 func (w *Ws) WriteQueue(c chan []byte, e chan error) {
     go func() {
         for bytes := range c {
