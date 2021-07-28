@@ -123,7 +123,10 @@ func (w *Ws) Connect() error {
         return err
     }
     if w.conn != nil {
-        w.Close()
+        err= w.Close()
+        if err != nil {
+            panic(err)
+        }
     }
     w.conn = c
     w.conn.SetCloseHandler(w.closeHandler)
