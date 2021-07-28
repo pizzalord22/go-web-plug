@@ -50,12 +50,12 @@ func init() {
 // semver 2.0
 const version = "1.1.0"
 
-// return the current version number
+// Version return the current version number
 func (w *Ws) Version() string {
     return version
 }
 
-// read a websocket message
+// Read a websocket message
 func (w *Ws) Read() (int, []byte, error) {
     if w.conn == nil {
         _ = w.Connect()
@@ -66,7 +66,7 @@ func (w *Ws) Read() (int, []byte, error) {
     return t, d, err
 }
 
-// read a websocket message in json format
+// ReadJSON read a websocket message in json format
 func (w *Ws) ReadJSON(v interface{}) error {
     if w.conn == nil {
         _ = w.Connect()
@@ -77,7 +77,7 @@ func (w *Ws) ReadJSON(v interface{}) error {
     return err
 }
 
-// write a message
+// WriteMessage write a message
 func (w *Ws) WriteMessage(messageType int, data []byte) error {
     if w.conn == nil {
         _ = w.Connect()
@@ -88,7 +88,7 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
     return err
 }
 
-// write a message in json format
+// WriteJSON write a message in json format
 func (w *Ws) WriteJSON(v interface{}) error {
     if w.conn == nil {
         _ = w.Connect()
@@ -99,17 +99,17 @@ func (w *Ws) WriteJSON(v interface{}) error {
     return err
 }
 
-// add a certificate to the certificate pool
+// AppendCertsFromPem add a certificate to the certificate pool
 func (w *Ws) AppendCertsFromPem(pemCerts []byte) bool {
     return w.caPool.AppendCertsFromPEM(pemCerts)
 }
 
-// set the url to connect to
+// SetUrl set the url to connect to
 func (w *Ws) SetUrl(scheme, host, path string) {
     w.url = url.URL{Scheme: scheme, Host: host, Path: path}
 }
 
-// connect to the websocket server
+// Connect connect to the websocket server
 func (w *Ws) Connect() error {
     syncLock.Lock()
     defer syncLock.Unlock()
@@ -133,23 +133,23 @@ func (w *Ws) Connect() error {
     return nil
 }
 
-// set a message to be send when a connection is established
+// SetInitMsg set a message to be send when a connection is established
 func (w *Ws) SetInitMsg(msg []byte) {
     w.sendInitMsg = true
     w.initMsg = msg
 }
 
-// set a close handler to call when a connection ends
+// SetCloseHandler set a close handler to call when a connection ends
 func (w *Ws) SetCloseHandler(f func(int, string) error) {
     w.closeHandler = f
 }
 
-// set to true for automatic reconnecting
+// Reconnect set to true for automatic reconnecting
 func (w *Ws) Reconnect(b bool) {
     w.reconnect = b
 }
 
-// close the websocket connection
+// Close the websocket connection
 func (w *Ws) Close() error {
     if w.conn == nil {
         return nil
@@ -157,37 +157,29 @@ func (w *Ws) Close() error {
     w.WriteMessage(websocket.CloseMessage, []byte{})
     return w.conn.Close()
 }
+
 // check for network problems
 func (w *Ws) errCheck(err error) {
     if err != nil {
+        log.Println(err)
+    }
+    if w.reconnect {
         reconnectLock.Lock()
-        if !reconnectBool {
-            reconnectLock.Unlock()
-            log.Println(err)
+        defer reconnectLock.Unlock()
+        for err != nil {
+            err = w.Connect()
+            time.Sleep(1 * time.Second)
         }
-        reconnectLock.Lock()
-        if w.reconnect && !reconnectBool {
-            reconnectBool = true
-            reconnectLock.Unlock()
-            for err != nil {
-                err = w.Connect()
-                time.Sleep(1 * time.Second)
-            }
-            reconnectLock.Lock()
-            reconnectBool = false
-            reconnectLock.Unlock()
-            return
-        }
-        reconnectLock.Unlock()
+        return
     }
 }
 
-// set the secure bit
+// SetSecure set the secure bit
 func (w *Ws) SetSecure(b bool) {
     w.secure = b
 }
 
-// writeQueue requires  a channel te read message from and a channel to send errors to
+// WriteQueue requires  a channel te read message from and a channel to send errors to
 // if wil requeue failed messages until the queue is filled, then it will throw them away
 // todo create a way to remove old message when the queue is filling up so that there is space for new message
 func (w *Ws) WriteQueue(c chan []byte, e chan error) {
@@ -204,5 +196,5 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
     }()
 }
 
-// exported as symbol named "Websocket"
+// Websocket exported as symbol named "Websocket"
 var Websocket Ws
