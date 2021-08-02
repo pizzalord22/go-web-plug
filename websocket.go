@@ -126,7 +126,7 @@ func (w *Ws) Connect() error {
 	if w.conn != nil {
 		err = w.Close()
 		if err != nil {
-			panic(err)
+			log.Println(err)
 		}
 	}
 	w.conn = c
