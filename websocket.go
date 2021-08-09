@@ -13,7 +13,8 @@ import (
 )
 
 var syncLock = new(sync.Mutex)
-var reconnectLock = new(sync.Mutex)
+
+// var reconnectLock = new(sync.Mutex)
 
 type Ws struct {
     // websocket connection
@@ -28,10 +29,10 @@ type Ws struct {
     // url contains the url to connect to
     url url.URL
 
-    // set to true to send the initMsg when a connection is mademv6l.tar.g
+    // set to true to send the initMsg when a connection is made
     sendInitMsg bool
 
-    // message that is to be send  when a connection is made
+    // message that is to be sent when a connection is made
     initMsg []byte
 
     // set to true to automatically try to reconnect
@@ -48,7 +49,7 @@ func init() {
 }
 
 // semver 2.0
-const version = "1.1.0"
+const version = "1.2.0"
 
 // Version return the current version number
 func (w *Ws) Version() string {
@@ -58,8 +59,10 @@ func (w *Ws) Version() string {
 // Read a websocket message
 func (w *Ws) Read() (int, []byte, error) {
     if w.conn == nil {
-        _ = w.Connect()
-        return 0, []byte{}, errors.New("can not read when there is no connection, trying to reconnect")
+        err := w.Connect()
+        if err != nil {
+            return 0, []byte{}, errors.New("can not read when there is no connection, and could not create a connection")
+        }
     }
     t, d, err := w.conn.ReadMessage()
     go w.errCheck(err)
@@ -69,8 +72,10 @@ func (w *Ws) Read() (int, []byte, error) {
 // ReadJSON read a websocket message in json format
 func (w *Ws) ReadJSON(v interface{}) error {
     if w.conn == nil {
-        _ = w.Connect()
-        return errors.New("can not read when there is no connection, trying to reconnect")
+        err := w.Connect()
+        if err != nil {
+            return errors.New("can not read when there is no connection, and could not create a connection")
+        }
     }
     err := w.conn.ReadJSON(v)
     go w.errCheck(err)
@@ -80,8 +85,10 @@ func (w *Ws) ReadJSON(v interface{}) error {
 // WriteMessage write a message
 func (w *Ws) WriteMessage(messageType int, data []byte) error {
     if w.conn == nil {
-        _ = w.Connect()
-        return errors.New("can not write when there is no connection, trying to reconnect")
+        err := w.Connect()
+        if err != nil {
+            return errors.New("can not read when there is no connection, and could not create a connection")
+        }
     }
     err := w.conn.WriteMessage(messageType, data)
     go w.errCheck(err)
@@ -91,8 +98,10 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
 // WriteJSON write a message in json format
 func (w *Ws) WriteJSON(v interface{}) error {
     if w.conn == nil {
-        _ = w.Connect()
-        return errors.New("can not write when there is no connection, trying to reconnect")
+        err := w.Connect()
+        if err != nil {
+            return errors.New("can not read when there is no connection, and could not create a connection")
+        }
     }
     err := w.conn.WriteJSON(v)
     go w.errCheck(err)
