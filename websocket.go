@@ -111,11 +111,15 @@ func (w *Ws) SetUrl(scheme, host, path string) {
 
 // Connect to the websocket server
 func (w *Ws) Connect() error {
+    syncLock.Lock()
+    defer syncLock.Unlock()
+    log.Println("locked connect mutex")
     var d websocket.Dialer
     if w.secure {
         config := tls.Config{RootCAs: w.caPool}
         d = websocket.Dialer{TLSClientConfig: &config}
     }
+    log.Println("attempting to make connection")
     c, _, err := d.Dial(w.url.String(), nil)
     if err != nil {
         return err
@@ -126,11 +130,13 @@ func (w *Ws) Connect() error {
             log.Println(err)
         }
     }
+    log.Println("made a connection")
     w.conn = c
     w.conn.SetCloseHandler(w.closeHandler)
     if w.sendInitMsg {
         return w.WriteMessage(1, w.initMsg)
     }
+    log.Println("send innit message exiting connect")
     return nil
 }
 
