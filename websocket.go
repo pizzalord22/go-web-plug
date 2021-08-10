@@ -220,5 +220,10 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
     }()
 }
 
+func Exit(){
+    // todo cleanly exit the plug
+}
+
+
 // Websocket exported as symbol named "Websocket"
 var Websocket Ws
