@@ -2,10 +2,11 @@ package websocket
 
 import (
     "crypto/x509"
-    "github.com/gorilla/websocket"
     "net/url"
     "reflect"
     "testing"
+
+    "github.com/gorilla/websocket"
 )
 
 func TestWs_AppendCertsFromPem(t *testing.T) {

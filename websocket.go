@@ -4,13 +4,17 @@ import (
     "crypto/tls"
     "crypto/x509"
     "errors"
+    `fmt`
     "log"
     "net/url"
     "sync"
     "time"
-
+    
     "github.com/gorilla/websocket"
 )
+
+// semver 2.0
+const version = "1.2.3"
 
 var syncLock = new(sync.Mutex)
 
@@ -19,37 +23,35 @@ var syncLock = new(sync.Mutex)
 type Ws struct {
     // websocket connection
     conn *websocket.Conn
-
+    
     // certificate pool used for secure connections
     caPool *x509.CertPool
-
+    
     // set to true to use certificates
     secure bool
-
+    
     // url contains the url to connect to
     url url.URL
-
+    
     // set to true to send the initMsg when a connection is made
     sendInitMsg bool
-
+    
     // message that is to be sent when a connection is made
     initMsg []byte
-
+    
     // set to true to automatically try to reconnect
     reconnect    bool
     reconnecting bool
-
+    
     // close handler is called when a connection ends
     closeHandler func(int, string) error
 }
 
-// create a nwe caPool, this is needed since we can not add new certs to an empty cert pool
+// create a new caPool, this is needed since we can not add new certs to an empty cert pool
 func init() {
     Websocket.caPool = x509.NewCertPool()
+    fmt.Println("load websocket plugin version: " + version)
 }
-
-// semver 2.0
-const version = "1.2.0"
 
 // Version return the current version number
 func (w *Ws) Version() string {
@@ -65,7 +67,7 @@ func (w *Ws) Read() (int, []byte, error) {
         }
     }
     t, d, err := w.conn.ReadMessage()
-    go w.errCheck(err)
+    w.errCheck(err)
     return t, d, err
 }
 
@@ -78,7 +80,7 @@ func (w *Ws) ReadJSON(v interface{}) error {
         }
     }
     err := w.conn.ReadJSON(v)
-    go w.errCheck(err)
+    w.errCheck(err)
     return err
 }
 
@@ -91,7 +93,7 @@ func (w *Ws) WriteMessage(messageType int, data []byte) error {
         }
     }
     err := w.conn.WriteMessage(messageType, data)
-    go w.errCheck(err)
+    w.errCheck(err)
     return err
 }
 
@@ -104,7 +106,7 @@ func (w *Ws) WriteJSON(v interface{}) error {
         }
     }
     err := w.conn.WriteJSON(v)
-    go w.errCheck(err)
+    w.errCheck(err)
     return err
 }
 
@@ -126,7 +128,7 @@ func (w *Ws) Connect() error {
     var d websocket.Dialer
     if w.secure {
         config := tls.Config{RootCAs: w.caPool}
-        d = websocket.Dialer{TLSClientConfig: &config}
+        d = websocket.Dialer{TLSClientConfig: &config, HandshakeTimeout: 30 * time.Second}
     }
     log.Println("attempting to make connection")
     c, _, err := d.Dial(w.url.String(), nil)
@@ -134,6 +136,7 @@ func (w *Ws) Connect() error {
         return err
     }
     if w.conn != nil {
+        log.Println("closing existing connection")
         err = w.Close()
         if err != nil {
             log.Println(err)
@@ -143,9 +146,9 @@ func (w *Ws) Connect() error {
     w.conn = c
     w.conn.SetCloseHandler(w.closeHandler)
     if w.sendInitMsg {
+        log.Println("send innit message exiting connect")
         return w.WriteMessage(1, w.initMsg)
     }
-    log.Println("send innit message exiting connect")
     return nil
 }
 
@@ -204,7 +207,7 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
     go func() {
         for bytes := range c {
             err := w.WriteMessage(1, bytes)
-            go w.errCheck(err)
+            w.errCheck(err)
             if err != nil {
                 e <- err
                 // when the buffer is full we remove an old element and insert a new one,
@@ -214,16 +217,11 @@ func (w *Ws) WriteQueue(c chan []byte, e chan error) {
                     <-c
                 }
                 c <- bytes
-                time.Sleep(1 * time.Second)
+                time.Sleep(time.Second)
             }
         }
     }()
 }
-
-func Exit(){
-    // todo cleanly exit the plug
-}
-
 
 // Websocket exported as symbol named "Websocket"
 var Websocket Ws
