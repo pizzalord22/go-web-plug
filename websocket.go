@@ -6,6 +6,7 @@ import (
     "errors"
     `fmt`
     "log"
+    "math/rand"
     "net/url"
     "sync"
     "time"
@@ -189,7 +190,7 @@ func (w *Ws) errCheck(err error) {
         w.reconnecting = true
         for err != nil {
             err = w.Connect()
-            time.Sleep(1 * time.Second)
+            time.Sleep(time.Duration(rand.Intn(3000)) * time.Second)
         }
         w.reconnecting = false
         return
