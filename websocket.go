@@ -17,6 +17,7 @@ import (
 // semver 2.0
 const version = "1.2.3"
 
+// global lock for synchronization
 var syncLock = new(sync.Mutex)
 
 // var reconnectLock = new(sync.Mutex)
@@ -50,7 +51,7 @@ type Ws struct {
 
 // create a new caPool, this is needed since we can not add new certs to an empty cert pool
 func init() {
-    Websocket.caPool = x509.NewCertPool()
+    Websocket.caPool = x509.NewCertPool() // this is not needed with a server that is configured properly
     fmt.Println("load websocket plugin version: " + version)
 }
 
